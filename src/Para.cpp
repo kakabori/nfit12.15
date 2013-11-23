@@ -8,7 +8,8 @@ using namespace std;
 #define PI 3.1415926535897932384626433832795
 int Para::s_numParams = TOT_NUM_FIT_PARAMS;
 
-/****************************************************************************************
+
+/******************************************************************************
 This function sets a model parameter to an input value.
 A model parameter is specified by the name string.
 See ModelCalculator::stringToVarEnum for a list of strings that can be
@@ -20,25 +21,27 @@ add a new enum value in enum Var
 
 value: an input value
 name: an input name specifying which parameter to be set to an input value
-****************************************************************************************/
+******************************************************************************/
 void Para::setValue(double value, const char *_name)
 {
 	string name(_name);
 	setValue(value, name);
 }
 
+
 void Para::setValue(double value, const string& name)
 {
   setValue(value, stringToVarEnum(name));
 }
 
-/****************************************************************************************
+
+/******************************************************************************
 an accessor function
 Given an input index, a corresponding variable gets set to an input value
 When either Kc, B, D, or T gets modifiedy, lambda and eta get recalculated.
 This function accepts int instead of enum itself so that a user of this object
 does not have to define a separate enum.
-****************************************************************************************/
+******************************************************************************/
 void Para::setValue(double value, int index)
 {
   switch (index) {
@@ -62,6 +65,7 @@ void Para::setValue(double value, int index)
     default: cerr << "wrong index input to Para_setValue" << endl; break;
   }
 }
+
 
 double Para::getValue(int index)
 {
@@ -89,15 +93,17 @@ double Para::getValue(int index)
   return value;
 }
 
-/****************************************************************************************
+
+/******************************************************************************
 This function updates values of lambda and eta.
 Should be called whenever a value of Kc, B, D, or T gets modified
-****************************************************************************************/
+******************************************************************************/
 void Para::setLambdaEta()
 {
   lambda = 1e16 * sqrt(Kc/B) / D;
   eta = 2.17 * (T+273.15) / sqrt(Kc*B) / D / D;
 }
+
 
 void Para::set_beamSigma()
 {
@@ -105,28 +111,26 @@ void Para::set_beamSigma()
 	beamSigma = deltaQPerPixel * bFWHM;
 }
 
-/****************************************************************************************
+
+/******************************************************************************
 If Kc, B, lxctr, and mctr are free parameters, tcl procedure named setnfit executes
 paraset nfit p 0 1 2  4
 objv points to the fourth item, 0
 n = 4, which is the number of free parameters
-****************************************************************************************/
+******************************************************************************/
 void Para::setNfit (Tcl_Interp *interp, Tcl_Obj *const objv[], int n)
 {
   int ix;
   nfit = 0;
-  //cout << "n =" << n << endl;
   while ( --n >= 0 ) {
     if ( Tcl_GetIntFromObj(interp, objv[n], &ix) != TCL_OK ) continue;
-    //cout << "ix = " << ix << endl;
-    //cout << "n = " << n << endl;
     if ( ! _check(ix) ) continue;
-    //cout << "nfit = " << nfit << endl;
     idx[nfit] = ix;
     _xp(ix, xp + nfit, epsfcn + nfit);
     nfit += 1;
   }
 }
+
 
 bool Para::_check (int ix)
 {
@@ -137,13 +141,17 @@ bool Para::_check (int ix)
   return ix < Para::s_numParams;
 }
 
+
 void Para::_xp (int ix, double **p, double *dp){
   double *ptr = (double*)this;
   *p = ptr + ix;
+  cout << "ix = " << ix << endl;
+  cout << "**p = " << **p << endl;
   *dp = 0.01;
   if(ix == Var_D)          *dp = 0.0001;
   else if(ix == Var_bc2b)  *dp = 0.001;
 }
+
 
 /******************************************************************************
 This function converts an input string to a correspoinding enum value.

@@ -22,8 +22,8 @@
 #include "tvImg.h"
 #include "toad.h"
 #include "toadmisc.h"
-#include "dataset.h"
-#include "modelcalculator.h"
+
+
 #include "funsupport.h"
 #include "tvds.h"
 #include "funclmdif.h"
@@ -31,7 +31,6 @@
 #include "nfit.h"
 #include "globalVariables.h"
 #include "utable.h"
-#include "Para.h"
 
 
 using std::cout; using std::endl;
@@ -974,136 +973,11 @@ setNFIT
 int setNFIT(ClientData clientData, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[])
 {
   int numFreeParams = objc - 1;
+  cout << "numFreeParams: " << numFreeParams << endl;
   g_ParaStruct.setNfit(interp, objv + 1, numFreeParams);
   return TCL_OK;
 }
 
-/****************************************************************************************
-para op name
-****************************************************************************************/
-/*
-int YF_paraset(ClientData clientData, Tcl_Interp *interp,int objc, Tcl_Obj *const objv[])
-{
-  const char *Options[] = {
-    "set", "update", "delete", "nfit", "disp", "dfit", "qz", "qr",
-    (char *) NULL
-  };
-  enum options {
-    PARA_SET, PARA_UPDATE, PARA_DEL, PARA_NFIT, PARA_DISP, PARA_DFIT, PARA_QZ, PARA_QR
-  };
-  int index;
-  Tcl_HashEntry *entryPtr;
-  Para *p;
-
-  if( objc < 3) return TCL_ERROR;
-  if(Tcl_GetIndexFromObj(interp, objv[1], Options, "option", 0, &index) != TCL_OK) return TCL_ERROR;
-
-  entryPtr=_getExistingPtr(interp, &paraHT, objv[2], (void**)&p);
-  if( p == NULL && (enum options) index != PARA_SET){
-    cout<<(char)0x1B<<"[31;1mhash table error[0m"<<endl;
-    return TCL_ERROR;
-  }
-
-  switch ((enum options) index) {
-  case PARA_SET:
-    int newflag=0;
-    if( p == NULL) {
-      p = new Para;
-      newflag = 1;
-    }
-
-    double *paraptr = (double*)p;
-
-    if( objc < 4 ) return TCL_ERROR;
-    if( isalpha( *Tcl_GetString(objv[3]) ) ) {
-      double a;
-      if( objc < 5 ) return TCL_ERROR;
-      if (Tcl_GetIndexFromObj(interp, objv[3], Varname, "varname", 0, &index) != TCL_OK) return TCL_ERROR;
-      if (Tcl_GetDoubleFromObj(interp, objv[4], &a) != TCL_OK) return TCL_ERROR;
-      if (index==18) {
-	      a=1.18/YFPI*a*paraptr[9]*paraptr[13]/paraptr[14];
-	      index=8;
-      }
-      paraptr[index] = a;
-    } else {
-      for(int i=3; i<objc; i++) Tcl_GetDoubleFromObj(interp, objv[i], paraptr+i-3 );
-    }
-    if(newflag == 1) {
-      Tcl_HashEntry *entry = Tcl_CreateHashEntry(&paraHT, Tcl_GetString(objv[2]), &newflag);
-      p->nfit = 0;
-      entry->clientData = p;
-    }
-    break;
-  case PARA_UPDATE:
-    char cmd[20];
-    for(int i=0; i<18; i++) {
-      NKparams[i]=((double*)p)[i];
-      sprintf(cmd,"NKparams(%d)",i);
-      Tcl_UpdateLinkedVar(interp, cmd);
-    }
-    int i=0;
-    NKparams[i]=int(1e17*((double*)p)[i]+0.5)*1e-17;
-    sprintf(cmd,"NKparams(%d)",i);
-    Tcl_UpdateLinkedVar(interp, cmd);
-    i=1;
-    NKparams[i]=int(1e-9*((double*)p)[i]+0.5)*1e9;
-    sprintf(cmd,"NKparams(%d)",i);
-    Tcl_UpdateLinkedVar(interp, cmd);
-    break;
-  case PARA_DEL:
-    Tcl_DeleteHashEntry(entryPtr);
-    delete p;
-    break;
-
-  case PARA_NFIT:
-    //objv+3 because the first arguments are "paraset nfit p"
-    //objc-3 is equal to the number of free parameters
-    p->setNfit(interp, objv+3, objc-3);
-    break;
-
-  case PARA_DISP:{
-    for(int i=0; i<18; i++)
-      cout<<i<<' '<<Varname[i]<<"\t:\t"<<((double*)p)[i]<<endl;
-    cout<<"\nnfit = "<<p->nfit<<" {";
-    for(int i=0; i<p->nfit; i++){
-      cout<<p->idx[i]<<' ';
-    }
-    cout<<'}'<<endl;
-    break;}
-
-  case PARA_DFIT:{
-    int num = (objc-2)/2;
-    double *pp = new double[num];
-    int *pn = new int[num];
-    for(int i=0; i<num; i++){
-      Tcl_GetIntFromObj(interp, objv[3+i*2], pn+i);
-      Tcl_GetDoubleFromObj(interp, objv[3+i*2+1], pp+i);
-    }
-    p->dfit(num, pn, pp);
-    break;}
-  case PARA_QZ:{
-    int pix;
-    Tcl_GetIntFromObj(interp, objv[3], &pix);
-    cout<<p->setup.getqz(pix)<<endl;
-    break;}
-  case PARA_QR:{
-    int pix;
-    Tcl_GetIntFromObj(interp, objv[3], &pix);
-    cout<<p->setup.getqr(pix)<<endl;
-    break;}
-  }
-  return TCL_OK;
-}
-*/
-
-/* multi-threading utilities */
-struct NfitThreadPars {
-  int iter;
-  Data *dp;
-  ModelCalculator *mc;
-  Para *p;
-  FILE *fp;
-};
 
 /* error - wrapper for perror used for bad syscalls */
 void error(char *msg) {
@@ -1190,7 +1064,7 @@ void* runTimer(void* arg){
   return NULL;
 }
 
-void updatelinks(double chisq, char *chain);
+
 
 /****************************************************************************
 Either pthread_join(3) or pthread_detach() should be called for each
@@ -1244,6 +1118,9 @@ void *thread_lmdif(void *s)
   lmdif->setup(FuncLmdif::WrapperFunclmdif, func->npoint(), ntp->p->nfit, ntp->iter,
                FTOL, GTOL, XTOL, LAMBDA_LM, ntp->p->epsfcn, func);
   lmdif->init(ntp->p->xp, ntp->p->nfit);
+  for (int i = 0; i < ntp->p->nfit; i++) {
+    cout << *(ntp->p->xp[i]) << endl;
+  }
   startTime = time(NULL);
   pthread_create(&timerThread, NULL, runTimer, NULL);
 

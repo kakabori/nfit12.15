@@ -274,7 +274,8 @@ double ModelCalculator::getMosaicStrFct(double qr)
 {
   // Takes the absolute value of qr to avoid a very small negative value 
   // representing zero
-  if (mosaic > 0.001) {
+  const double negligible_mosaic = 0.001 * PI / 180;
+  if (mosaic > negligible_mosaic) {
     return exp(spMosaic.val(log(fabs(qr)+SMALLNUM)));
   } else {
     return exp(spStrFct.val(log(fabs(qr)+SMALLNUM)));
